@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
     private TextView resultView;
     private ProgressBar progressBar;
     private Context context;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
