@@ -1,0 +1,2 @@
+# EasyFileDownloader
+一个用于android中的轻量级文件下载器、特别适合应用内升级下载APK
