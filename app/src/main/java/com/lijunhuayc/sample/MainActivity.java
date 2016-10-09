@@ -1,4 +1,4 @@
-package com.lijunhuayc.upgrade.sample;
+package com.lijunhuayc.sample;
 
 import android.app.Activity;
 import android.content.Context;
@@ -13,9 +13,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lijunhuayc.upgrade.R;
-import com.lijunhuayc.upgrade.downloader.DownloadProgressListener;
-import com.lijunhuayc.upgrade.downloader.FileDownloader;
-import com.lijunhuayc.upgrade.downloader.WolfDownloader;
+import com.lijunhuayc.downloader.downloader.DownloadProgressListener;
+import com.lijunhuayc.downloader.downloader.FileDownloader;
+import com.lijunhuayc.downloader.downloader.WolfDownloader;
 
 public class MainActivity extends Activity {
     private EditText downloadpathText;

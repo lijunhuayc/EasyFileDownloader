@@ -1,4 +1,4 @@
-package com.lijunhuayc.upgrade.notification;
+package com.lijunhuayc.downloader.notification;
 
 import android.app.NotificationManager;
 import android.content.Context;
@@ -19,19 +19,19 @@ public class NotificationHelper {
     }
 
 
-    public void clear() {
+    public static void clear() {
         if (null != notificationManager) {
             notificationManager.cancelAll();
         }
     }
 
-    public void remove(int id) {
+    public static void remove(int id) {
         if (null != notificationManager) {
             notificationManager.cancel(id);
         }
     }
 
-    public void remove(List<Integer> idList) {
+    public static void remove(List<Integer> idList) {
         if (null != notificationManager) {
             for (int id : idList) {
                 notificationManager.cancel(id);

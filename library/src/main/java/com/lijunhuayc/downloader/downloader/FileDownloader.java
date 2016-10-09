@@ -1,4 +1,4 @@
-package com.lijunhuayc.upgrade.downloader;
+package com.lijunhuayc.downloader.downloader;
 
 import android.content.Context;
 import android.os.Handler;
@@ -6,7 +6,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.lijunhuayc.upgrade.db.DownloadDBHelper;
+import com.lijunhuayc.downloader.db.DownloadDBHelper;
 
 import java.io.File;
 import java.io.IOException;

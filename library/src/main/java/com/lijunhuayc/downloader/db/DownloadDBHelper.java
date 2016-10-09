@@ -1,4 +1,4 @@
-package com.lijunhuayc.upgrade.db;
+package com.lijunhuayc.downloader.db;
 
 import android.content.Context;
 import android.database.Cursor;

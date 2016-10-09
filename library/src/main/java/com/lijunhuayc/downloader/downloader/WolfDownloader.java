@@ -1,4 +1,4 @@
-package com.lijunhuayc.upgrade.downloader;
+package com.lijunhuayc.downloader.downloader;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -7,7 +7,7 @@ import android.text.TextUtils;
 import java.io.File;
 
 /**
- * Desc: 狼神文件下载器[简版]
+ * Desc: 小狼文件下载器[简版]
  * Tips: 支持多线程断点续传
  * Created by ${junhua.li} on 2016/09/28 09:59.
  * Email: lijunhuayc@sina.com

@@ -1,4 +1,4 @@
-package com.lijunhuayc.upgrade.downloader;
+package com.lijunhuayc.downloader.downloader;
 
 /**
  * Desc: 下载进度接口

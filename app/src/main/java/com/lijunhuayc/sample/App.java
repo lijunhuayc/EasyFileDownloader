@@ -1,8 +1,8 @@
-package com.lijunhuayc.upgrade.sample;
+package com.lijunhuayc.sample;
 
 import android.app.Application;
 
-import com.lijunhuayc.upgrade.notification.NotificationHelper;
+import com.lijunhuayc.downloader.notification.NotificationHelper;
 
 /**
  * Desc:
