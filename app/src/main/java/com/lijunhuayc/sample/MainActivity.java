@@ -12,7 +12,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lijunhuayc.upgrade.R;
 import com.lijunhuayc.downloader.downloader.DownloadProgressListener;
 import com.lijunhuayc.downloader.downloader.FileDownloader;
 import com.lijunhuayc.downloader.downloader.WolfDownloader;
