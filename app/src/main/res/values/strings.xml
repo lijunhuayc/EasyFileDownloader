@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, AndroidUpgrade!</string>
-    <string name="app_name">AndroidUpgrade</string>
+    <string name="hello">Hello World, EasyFileDownloader!</string>
+    <string name="app_name">EasyFileDownloader</string>
 </resources>
