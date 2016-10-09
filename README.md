@@ -4,44 +4,44 @@
 ### 用法：
 ```java
 new WolfDownloader(context)
-                                .setThreadNum(3)
-                                .setDownloadUrl(path)
-                                .setSaveDir(Environment.getExternalStorageDirectory())
-                                .addDownloadListener(new DownloadProgressListener() {
-                                    @Override
-                                    public void onDownloadTotalSize(int totalSize) {
-                                        progressBar.setMax(totalSize);//设置进度条的最大刻度为文件的长度
-                                    }
+        .setThreadNum(3)
+        .setDownloadUrl(path)
+        .setSaveDir(Environment.getExternalStorageDirectory())
+        .addDownloadListener(new DownloadProgressListener() {
+            @Override
+            public void onDownloadTotalSize(int totalSize) {
+                progressBar.setMax(totalSize);//设置进度条的最大刻度为文件的长度
+            }
 
-                                    @Override
-                                    public void updateDownloadProgress(int size, float percent, float speed) {
-                                        StringBuilder sBuilder = new StringBuilder();
-                                        sBuilder.append("  ").append(FileDownloader.formatSpeed(speed));
-                                        sBuilder.append("  ").append(String.valueOf(percent + "%"));
-                                        sBuilder.append("  ").append(FileDownloader.formatSize(size)).append("/")
-                                                .append(FileDownloader.formatSize(progressBar.getMax()));
-                                        resultView.setText(sBuilder.toString());
-                                        progressBar.setProgress(size);
+            @Override
+            public void updateDownloadProgress(int size, float percent, float speed) {
+                StringBuilder sBuilder = new StringBuilder();
+                sBuilder.append("  ").append(FileDownloader.formatSpeed(speed));
+                sBuilder.append("  ").append(String.valueOf(percent + "%"));
+                sBuilder.append("  ").append(FileDownloader.formatSize(size)).append("/")
+                        .append(FileDownloader.formatSize(progressBar.getMax()));
+                resultView.setText(sBuilder.toString());
+                progressBar.setProgress(size);
 
-                                    }
+            }
 
-                                    @Override
-                                    public void onDownloadSuccess(String apkPath) {
-                                        Toast.makeText(MainActivity.this, "下载成功\n" + apkPath, Toast.LENGTH_SHORT).show();
-                                    }
+            @Override
+            public void onDownloadSuccess(String apkPath) {
+                Toast.makeText(MainActivity.this, "下载成功\n" + apkPath, Toast.LENGTH_SHORT).show();
+            }
 
-                                    @Override
-                                    public void onDownloadFailed() {
-                                        Toast.makeText(MainActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
-                                    }
-                                })
-                                .startDownload();
+            @Override
+            public void onDownloadFailed() {
+                Toast.makeText(MainActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
+            }
+        })
+        .startDownload();
 ```
 
 License
 =======
 
-    Copyright 2015 Wang Jie
+    Copyright 2016 lijunhuayc
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
