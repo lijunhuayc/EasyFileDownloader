@@ -24,20 +24,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
 }
 
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-}
-
-javadoc {
-    options {
-        encoding "UTF-8"
-        charSet 'UTF-8'
-    }
-}
-
-tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
-
 publish {
     userOrg = 'lijunhua'//bintray.com用户名
     groupId = 'com.lijunhuayc.downloader'//jcenter上的路径
