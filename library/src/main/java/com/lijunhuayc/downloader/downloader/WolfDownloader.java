@@ -7,8 +7,8 @@ import android.text.TextUtils;
 import java.io.File;
 
 /**
- * Desc: 小狼文件下载器[简版]
- * Tips: 支持多线程断点续传
+ * Desc: Wolf File Downloader [Simple]
+ * Tips: Support multithreading breakpoint continuingly
  * Created by ${junhua.li} on 2016/09/28 09:59.
  * Email: lijunhuayc@sina.com
  */

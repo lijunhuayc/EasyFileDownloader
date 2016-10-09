@@ -1,7 +1,7 @@
 package com.lijunhuayc.downloader.downloader;
 
 /**
- * Desc: 下载进度接口
+ * Desc:
  * Created by ${junhua.li} on 2016/08/25 17:38.
  * Email: lijunhuayc@sina.com
  */
@@ -9,11 +9,11 @@ public interface DownloadProgressListener {
     void onDownloadTotalSize(int totalSize);
 
     /**
-     * 实时更新下载进度
+     * Real-time update downloading progress
      *
-     * @param size    当前下载完成 单位 Byte
-     * @param percent 当前下载百分比 单位 %
-     * @param speed   当前下载速度 单位 KB/S
+     * @param size    downloading progress(Byte)
+     * @param percent downloading percent(%)
+     * @param speed   downloading speed(KB/S)
      */
     void updateDownloadProgress(int size, float percent, float speed);
 

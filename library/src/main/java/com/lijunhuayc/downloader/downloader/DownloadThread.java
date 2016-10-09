@@ -9,7 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Desc: 下载线程
+ * Desc:
  * Created by ${junhua.li} on 2016/08/24 15:08.
  * Email: lijunhuayc@sina.com
  */
@@ -48,7 +48,7 @@ public class DownloadThread extends Thread {
                 httpURLConnection.setRequestProperty("Accept-Language", "zh-CN");
                 httpURLConnection.setRequestProperty("Referer", this.downUrl.toString());
                 httpURLConnection.setRequestProperty("Charset", "UTF-8");
-                httpURLConnection.setRequestProperty("Range", "bytes=" + startPos + "-" + endPos);//设置获取实体数据的范围
+                httpURLConnection.setRequestProperty("Range", "bytes=" + startPos + "-" + endPos);//scope of data source
                 httpURLConnection.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.2; Trident/4.0; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)");
                 httpURLConnection.setRequestProperty("Connection", "Keep-Alive");
                 Log.d(TAG, "Thread " + this.threadId + " start download from position " + startPos);

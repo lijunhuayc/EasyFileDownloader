@@ -6,7 +6,7 @@ import android.content.Context;
 import java.util.List;
 
 /**
- * Desc: 通知栏辅助类
+ * Desc:
  * Created by ${junhua.li} on 2016/09/15 11:47.
  * Email: lijunhuayc@sina.com
  */

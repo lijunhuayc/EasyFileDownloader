@@ -23,16 +23,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Desc: 文件下载器
+ * Desc:
  * Created by ${junhua.li} on 2016/08/24 15:12.
  * Email: lijunhuayc@sina.com
  */
 public class FileDownloader {
     private static final String TAG = FileDownloader.class.getSimpleName();
-    //    protected static final int DOWNLOAD_STATUS_NONE = -1;//未启动或者已终止
-//    protected static final int DOWNLOAD_STATUS_START = 1;//正在下载
-//    protected static final int DOWNLOAD_STATUS_PAUSE = 2;//暂停下载
-//    protected static final int DOWNLOAD_STATUS_STOP = 3;//停止下载
+    //    protected static final int DOWNLOAD_STATUS_NONE = -1;//Did not start the download or the download is complete.
+//    protected static final int DOWNLOAD_STATUS_START = 1;//downloading
+//    protected static final int DOWNLOAD_STATUS_PAUSE = 2;//download pause
+//    protected static final int DOWNLOAD_STATUS_STOP = 3;//download stop
     private Context context;
     private DownloadDBHelper downloadDBHelper;
     private List<DownloadProgressListener> progressListeners = new ArrayList<>();
@@ -42,7 +42,7 @@ public class FileDownloader {
     private File saveFile;
     private Map<Integer, Integer> data = new ConcurrentHashMap<>();
     private int downloadSize = 0;
-    private int lastDownloadSize = 0;//最后一次更新时下载进度
+    private int lastDownloadSize = 0;//The last time update download progress
     private int block;
     private Handler mHandler;
 //    private int downloadStatus = DOWNLOAD_STATUS_NONE; //
@@ -116,17 +116,17 @@ public class FileDownloader {
             for (int i = 0; i < this.threads.length; i++) {
                 this.downloadSize += this.data.get(i);
             }
-            Log.d(TAG, "已经下载的长度" + this.downloadSize);
+            Log.d(TAG, "history download size = " + this.downloadSize);
         } else {
             this.data.clear();
             for (int i = 0; i < this.threads.length; i++) {
-                this.data.put(i, 0);//初始化每条线程已经下载的数据长度为0
+                this.data.put(i, 0);//Initialize each thread has downloaded data length is zero
             }
             this.downloadSize = 0;
-            this.downloadDBHelper.save(this.config.getDownloadUrl(), this.data);//初次保存数据
+            this.downloadDBHelper.save(this.config.getDownloadUrl(), this.data);//first save
         }
 
-        //计算每条线程下载的最大数据长度
+        //Calculating the maximum length of data download each thread
         this.block = (this.fileSize % this.threads.length) == 0 ?
                 this.fileSize / this.threads.length :
                 this.fileSize / this.threads.length + 1;
@@ -143,7 +143,7 @@ public class FileDownloader {
             randOut.close();
             URL url = new URL(this.config.getDownloadUrl());
 
-            for (int i = 0; i < this.threads.length; i++) {//开启线程进行下载
+            for (int i = 0; i < this.threads.length; i++) {//Open a thread to download
                 int downLength = this.data.get(i);
                 if (downLength < this.block && this.downloadSize < this.fileSize) {
                     this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block, this.data.get(i), i);
@@ -164,7 +164,7 @@ public class FileDownloader {
                 for (int i = 0; i < this.threads.length; i++) {
                     if (this.threads[i] != null && !this.threads[i].isFinish()) {
                         notFinish = true;
-                        if (this.threads[i].getDownloadLength() == -1) {//线程异常时重启下载线程
+                        if (this.threads[i].getDownloadLength() == -1) {//Restart the download threads when thread exception
                             this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block, this.data.get(i), i);
                             this.threads[i].setPriority(7);
                             this.threads[i].start();
@@ -174,7 +174,7 @@ public class FileDownloader {
                 onDownloadSize(this.downloadSize, calculatePercent(), calculateSpeed(startTime, System.currentTimeMillis()));
                 this.lastDownloadSize = this.downloadSize;
             }
-            onDownloadSize(this.downloadSize, 100.0f, 0.0f);    //下载结束后需要回调一次更新下载速度为0
+            onDownloadSize(this.downloadSize, 100.0f, 0.0f);//update download speed to zero after download complete.
             downloadDBHelper.delete(this.config.getDownloadUrl());
             if (this.downloadSize == this.fileSize) {
                 onDownloadSuccess(saveFile.getAbsolutePath());
@@ -317,7 +317,7 @@ public class FileDownloader {
     static final long KB_CONSTANT = 1024;//1KB
 
     /**
-     * 格式化下载进度
+     * Format the download progress
      *
      * @param size unit Byte
      * @return
@@ -339,7 +339,7 @@ public class FileDownloader {
     }
 
     /**
-     * 格式化下载速度
+     * Format the download speed
      *
      * @param speed unit Byte
      * @return
@@ -366,7 +366,7 @@ public class FileDownloader {
     }
 
     /**
-     * 格式化下载百分比
+     * Format the download percent
      *
      * @return
      */
@@ -377,19 +377,19 @@ public class FileDownloader {
     }
 
     /**
-     * 计算下载百分比
+     * Download percentage calculation
      *
      * @return
      */
     private float calculatePercent() {
         float num = (float) this.downloadSize / this.fileSize;
         float percent = ((float) (int) (num * 1000)) / 10;
-//        Log.d(TAG, "下载百分比：" + percent + "%");
+//        Log.d(TAG, "download percent = " + percent + "%");
         return percent;
     }
 
     /**
-     * 计算实时下载速度
+     * Computing real-time download speed
      *
      * @param startTime
      * @param endTime
@@ -403,7 +403,7 @@ public class FileDownloader {
             speed = ((float) mSize / usedTime) / KB_CONSTANT;
             speed = ((float) ((int) (speed * 10))) / 10;
         }
-//        Log.d(TAG, "下载速度：" + speed + " KB/s");
+//        Log.d(TAG, "download speed = " + speed + " KB/s");
         return speed;
     }
 

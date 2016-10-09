@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +43,7 @@ public class DownloadDBHelper extends BaseDBManager {
     }
 
     public void save(String url, Map<Integer, Integer> map) {
-//        Log.d(TAG, "save: url = " + url + ", map = " + map.toString());
+        Log.d(TAG, "save: url = " + url + ", map = " + map.toString());
         SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         try {

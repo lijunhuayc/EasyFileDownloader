@@ -5,7 +5,7 @@ import android.os.Environment;
 import java.io.File;
 
 /**
- * Desc: 下载器配置
+ * Desc:
  * Created by ${junhua.li} on 2016/09/28 09:49.
  * Email: lijunhuayc@sina.com
  */

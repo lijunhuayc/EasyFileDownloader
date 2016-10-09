@@ -11,8 +11,8 @@ import android.text.TextUtils;
  * Email: lijunhuayc@sina.com
  */
 public abstract class BaseDBManager {
-    public static final String DEFAULT_DB_NAME = "lijunhuayc.db";
     protected static final String TAG = BaseDBManager.class.getName();
+    public static final String DEFAULT_DB_NAME = "easy_file_downloader.db";
     private int version = 1;
     protected String databaseName;
     protected Context mContext = null;
