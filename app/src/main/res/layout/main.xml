@@ -30,6 +30,12 @@
         android:text="暂停" />
 
     <Button
+        android:id="@+id/continueBt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="继续" />
+
+    <Button
         android:id="@+id/stopBt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

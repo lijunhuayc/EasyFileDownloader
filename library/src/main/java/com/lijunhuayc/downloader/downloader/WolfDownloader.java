@@ -68,6 +68,10 @@ public class WolfDownloader {
         fileDownloader.pause();
     }
 
+    public void restartDownload() {
+        fileDownloader.restart();
+    }
+
     public void stopDownload() {
         fileDownloader.stop();
     }

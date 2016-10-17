@@ -62,6 +62,10 @@ public class FileDownloader {
         this.targetStatus = FileDownloader.DOWNLOAD_STATUS_STOP;
     }
 
+    protected void restart() {
+        this.targetStatus = FileDownloader.DOWNLOAD_STATUS_START;
+    }
+
     protected void start(final DownloaderConfig config) {
         new Thread() {
             @Override
