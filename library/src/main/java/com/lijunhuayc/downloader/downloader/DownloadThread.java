@@ -1,6 +1,6 @@
 package com.lijunhuayc.downloader.downloader;
 
-import android.util.Log;
+import com.lijunhuayc.downloader.utils.LogUtils;
 
 import java.io.File;
 import java.io.InputStream;
@@ -22,6 +22,7 @@ public class DownloadThread extends Thread {
     private int downloadLength = -1;
     private int threadId = -1;
     private boolean finish = false;
+    private boolean isInterrupt = false;
 
     public DownloadThread(FileDownloader fileDownloader, URL downUrl, File saveFile, int block, int downloadLength, int threadId) {
         this.downUrl = downUrl;
@@ -51,7 +52,7 @@ public class DownloadThread extends Thread {
                 httpURLConnection.setRequestProperty("Range", "bytes=" + startPos + "-" + endPos);//scope of data source
                 httpURLConnection.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.2; Trident/4.0; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)");
                 httpURLConnection.setRequestProperty("Connection", "Keep-Alive");
-                Log.d(TAG, "Thread " + this.threadId + " start download from position " + startPos);
+                LogUtils.d(TAG, "Thread " + this.threadId + " start download from position " + startPos);
 
                 inStream = httpURLConnection.getInputStream();
                 byte[] buffer = new byte[1024 * 1024];
@@ -62,15 +63,21 @@ public class DownloadThread extends Thread {
                 while ((offset = inStream.read(buffer, 0, buffer.length)) != -1) {
                     randomAccessFile.write(buffer, 0, offset);
                     this.downloadLength += offset;
-                    this.fileDownloader.update(this.threadId, this.downloadLength);
                     this.fileDownloader.append(offset);
-//                    Log.d(TAG, "Thread" + this.threadId + " downloadLength=" + this.downloadLength + ", offset=" + offset);
+                    this.fileDownloader.update(this.threadId, this.downloadLength);
+//                    LogUtils.d(TAG, "Thread" + this.threadId + " downloadLength=" + this.downloadLength + ", offset=" + offset);
+                    if (isInterrupt) {
+                        LogUtils.d(TAG, "Thread " + this.threadId + " download interrupt.");
+                        break;
+                    }
                 }
-                Log.d(TAG, "Thread " + this.threadId + " download finish");
-                this.finish = true;
+                if(!isInterrupt){
+                    LogUtils.d(TAG, "Thread " + this.threadId + " download finish");
+                    this.finish = true;
+                }
             } catch (Exception e) {
                 this.downloadLength = -1;
-                Log.d(TAG, "Thread " + this.threadId + ":" + e.getMessage());
+                LogUtils.d(TAG, "Thread " + this.threadId + ":" + e.getMessage());
             } finally {
                 try {
                     if (null != randomAccessFile) {
@@ -87,6 +94,10 @@ public class DownloadThread extends Thread {
 
             }
         }
+    }
+
+    public void interruptDownload() {
+        this.isInterrupt = true;
     }
 
     public boolean isFinish() {

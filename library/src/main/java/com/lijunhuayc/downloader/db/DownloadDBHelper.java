@@ -4,7 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
+
+import com.lijunhuayc.downloader.utils.LogUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +44,7 @@ public class DownloadDBHelper extends BaseDBManager {
     }
 
     public void save(String url, Map<Integer, Integer> map) {
-        Log.d(TAG, "save: url = " + url + ", map = " + map.toString());
+        LogUtils.d(TAG, "save: url = " + url + ", map = " + map.toString());
         SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         try {
@@ -64,7 +65,7 @@ public class DownloadDBHelper extends BaseDBManager {
     }
 
     public void update(String url, Map<Integer, Integer> map) {
-//        Log.d(TAG, "update: url = " + url + ", map = " + map.toString());
+//        LogUtils.d(TAG, "update: url = " + url + ", map = " + map.toString());
         SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         try {
@@ -99,12 +100,12 @@ public class DownloadDBHelper extends BaseDBManager {
         }
         cursor.close();
         database.close();
-//        Log.d(TAG, "query: url = " + url + ", map = " + map.toString());
+//        LogUtils.d(TAG, "query: url = " + url + ", map = " + map.toString());
         return map;
     }
 
     public void delete(String url) {
-//        Log.d(TAG, "delete: url = " + url);
+//        LogUtils.d(TAG, "delete: url = " + url);
         SQLiteDatabase database = openDatabase();
         try {
             database.execSQL("delete from " + DBOpenHelper.TABLE_NAME + " where " + DBOpenHelper.FIELD_URL + "=?", new String[]{url});

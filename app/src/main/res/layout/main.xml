@@ -18,10 +18,22 @@
 
     <!-- 下载按钮 -->
     <Button
-        android:id="@+id/button"
+        android:id="@+id/startBt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="下载" />
+        android:text="开始" />
+
+    <Button
+        android:id="@+id/pauseBt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="暂停" />
+
+    <Button
+        android:id="@+id/stopBt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="停止" />
 
     <!-- 进度条 -->
     <ProgressBar

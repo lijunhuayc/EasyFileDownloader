@@ -20,4 +20,8 @@ public interface DownloadProgressListener {
     void onDownloadSuccess(String apkPath);
 
     void onDownloadFailed();
+
+    void onPauseDownload();
+
+    void onStopDownload();
 }

@@ -4,9 +4,9 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.lijunhuayc.downloader.db.DownloadDBHelper;
+import com.lijunhuayc.downloader.utils.LogUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,10 +29,10 @@ import java.util.regex.Pattern;
  */
 public class FileDownloader {
     private static final String TAG = FileDownloader.class.getSimpleName();
-    //    protected static final int DOWNLOAD_STATUS_NONE = -1;//Did not start the download or the download is complete.
-//    protected static final int DOWNLOAD_STATUS_START = 1;//downloading
-//    protected static final int DOWNLOAD_STATUS_PAUSE = 2;//download pause
-//    protected static final int DOWNLOAD_STATUS_STOP = 3;//download stop
+    protected static final int DOWNLOAD_STATUS_NONE = -1;//Did not start the download or the download is complete.
+    protected static final int DOWNLOAD_STATUS_START = 1;//downloading
+    protected static final int DOWNLOAD_STATUS_PAUSE = 2;//download pause
+    protected static final int DOWNLOAD_STATUS_STOP = 3;//download stop
     private Context context;
     private DownloadDBHelper downloadDBHelper;
     private List<DownloadProgressListener> progressListeners = new ArrayList<>();
@@ -45,7 +45,8 @@ public class FileDownloader {
     private int lastDownloadSize = 0;//The last time update download progress
     private int block;
     private Handler mHandler;
-//    private int downloadStatus = DOWNLOAD_STATUS_NONE; //
+    private int downloadStatus = DOWNLOAD_STATUS_NONE; //
+    private int targetStatus = DOWNLOAD_STATUS_NONE; //
 
     public FileDownloader(Context mContext) {
         this.context = mContext;
@@ -53,21 +54,13 @@ public class FileDownloader {
         this.mHandler = new Handler(this.context.getMainLooper());
     }
 
-//    protected void setDownloadStatus(int downloadStatus) {
-//        this.downloadStatus = downloadStatus;
-//    }
-//
-//    public int getDownloadStatus() {
-//        return downloadStatus;
-//    }
+    protected void pause() {
+        this.targetStatus = FileDownloader.DOWNLOAD_STATUS_PAUSE;
+    }
 
-//    protected void pause() {
-//        setDownloadStatus(FileDownloader.DOWNLOAD_STATUS_PAUSE);
-//    }
-//
-//    protected void stop() {
-//        setDownloadStatus(FileDownloader.DOWNLOAD_STATUS_STOP);
-//    }
+    protected void stop() {
+        this.targetStatus = FileDownloader.DOWNLOAD_STATUS_STOP;
+    }
 
     protected void start(final DownloaderConfig config) {
         new Thread() {
@@ -79,11 +72,12 @@ public class FileDownloader {
     }
 
     private void prepareDownload(DownloaderConfig config) {
+        this.targetStatus = DOWNLOAD_STATUS_START;
         this.config = config;
         this.threads = new DownloadThread[config.getThreadNum()];
         if (!this.config.getSaveDir().exists()) {
             if (!this.config.getSaveDir().mkdirs()) {
-                Log.d(TAG, "mkdirs download directory failed.");
+                LogUtils.d(TAG, "mkdirs download directory failed.");
                 return;
             }
         }
@@ -101,7 +95,7 @@ public class FileDownloader {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            Log.d(TAG, "open HttpURLConnection failed.");
+            LogUtils.d(TAG, "open HttpURLConnection failed.");
             return;
         }
 
@@ -116,7 +110,7 @@ public class FileDownloader {
             for (int i = 0; i < this.threads.length; i++) {
                 this.downloadSize += this.data.get(i);
             }
-            Log.d(TAG, "history download size = " + this.downloadSize);
+            LogUtils.d(TAG, "history download size = " + this.downloadSize);
         } else {
             this.data.clear();
             for (int i = 0; i < this.threads.length; i++) {
@@ -135,6 +129,7 @@ public class FileDownloader {
     }
 
     private void executeDownload() {
+        this.downloadStatus = DOWNLOAD_STATUS_START;
         try {
             RandomAccessFile randOut = new RandomAccessFile(this.saveFile, "rw");
             if (this.fileSize > 0) {
@@ -158,6 +153,18 @@ public class FileDownloader {
             long startTime;
             boolean notFinish = true;
             while (notFinish) {
+                switch (targetStatus) {
+                    case DOWNLOAD_STATUS_PAUSE:
+                        pauseDownload();
+                        continue;
+                    case DOWNLOAD_STATUS_STOP:
+                        stopDownload();
+                        return;
+                    case DOWNLOAD_STATUS_START:
+                        this.downloadStatus = DOWNLOAD_STATUS_START;
+                        break;
+                }
+
                 startTime = System.currentTimeMillis();
                 Thread.sleep(1000);
                 notFinish = false;
@@ -177,11 +184,17 @@ public class FileDownloader {
             onDownloadSize(this.downloadSize, 100.0f, 0.0f);//update download speed to zero after download complete.
             downloadDBHelper.delete(this.config.getDownloadUrl());
             if (this.downloadSize == this.fileSize) {
+                this.downloadStatus = DOWNLOAD_STATUS_NONE;
+                this.targetStatus = DOWNLOAD_STATUS_NONE;
                 onDownloadSuccess(saveFile.getAbsolutePath());
+            } else {
+                LogUtils.d(TAG, "file download failed.");
+                onDownloadFailed();
             }
         } catch (Exception e) {
+            LogUtils.d(TAG, "file download exception.");
             e.printStackTrace();
-            Log.d(TAG, "file download failed.");
+            downloadDBHelper.delete(this.config.getDownloadUrl());
             onDownloadFailed();
         }
     }
@@ -297,6 +310,50 @@ public class FileDownloader {
         }
     }
 
+    private void pauseDownload() {
+        if (null == progressListeners || downloadStatus == DOWNLOAD_STATUS_PAUSE) return;
+        for (int i = 0; i < this.threads.length; i++) {
+            threads[i].interruptDownload();
+        }
+        for (final DownloadProgressListener listener : progressListeners) {
+            if (null != listener) {
+                if (Looper.myLooper() != Looper.getMainLooper()) {
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onPauseDownload();
+                        }
+                    });
+                } else {
+                    listener.onPauseDownload();
+                }
+            }
+        }
+        downloadStatus = DOWNLOAD_STATUS_PAUSE;
+    }
+
+    private void stopDownload() {
+        if (null == progressListeners || downloadStatus == DOWNLOAD_STATUS_STOP) return;
+        for (int i = 0; i < this.threads.length; i++) {
+            threads[i].interruptDownload();
+        }
+        for (final DownloadProgressListener listener : progressListeners) {
+            if (null != listener) {
+                if (Looper.myLooper() != Looper.getMainLooper()) {
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onStopDownload();
+                        }
+                    });
+                } else {
+                    listener.onStopDownload();
+                }
+            }
+        }
+        this.downloadStatus = DOWNLOAD_STATUS_STOP;
+    }
+
     public void addDownloadProgressListener(DownloadProgressListener listener) {
         if (null != listener) {
             progressListeners.add(listener);
@@ -384,7 +441,7 @@ public class FileDownloader {
     private float calculatePercent() {
         float num = (float) this.downloadSize / this.fileSize;
         float percent = ((float) (int) (num * 1000)) / 10;
-//        Log.d(TAG, "download percent = " + percent + "%");
+//        LogUtils.d(TAG, "download percent = " + percent + "%");
         return percent;
     }
 
@@ -403,7 +460,7 @@ public class FileDownloader {
             speed = ((float) mSize / usedTime) / KB_CONSTANT;
             speed = ((float) ((int) (speed * 10))) / 10;
         }
-//        Log.d(TAG, "download speed = " + speed + " KB/s");
+//        LogUtils.d(TAG, "download speed = " + speed + " KB/s");
         return speed;
     }
 
@@ -422,7 +479,7 @@ public class FileDownloader {
         Map<String, String> header = getHttpResponseHeader(http);
         for (Map.Entry<String, String> entry : header.entrySet()) {
             String key = entry.getKey() != null ? entry.getKey() + ":" : "";
-            Log.d(TAG, key + entry.getValue());
+            LogUtils.d(TAG, key + entry.getValue());
         }
     }
 

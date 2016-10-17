@@ -64,12 +64,12 @@ public class WolfDownloader {
         fileDownloader.start(wolfConfig);
     }
 
-//    public void pauseDownload() {
-//        fileDownloader.pause();
-//    }
-//
-//    public void stopDownload() {
-//        fileDownloader.stop();
-//    }
+    public void pauseDownload() {
+        fileDownloader.pause();
+    }
+
+    public void stopDownload() {
+        fileDownloader.stop();
+    }
 
 }
