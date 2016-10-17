@@ -1,6 +1,5 @@
 package com.lijunhuayc.downloader.utils;
 
-import android.support.v4.BuildConfig;
 import android.util.Log;
 
 /**
@@ -10,9 +9,10 @@ import android.util.Log;
  */
 
 public class LogUtils {
+    private static final boolean LOG_SWITCH = true;
 
     public static void d(String tag, String msg) {
-        if (BuildConfig.DEBUG) {
+        if (!LOG_SWITCH) {
             Log.d(tag, msg);
         }
     }

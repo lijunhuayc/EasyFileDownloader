@@ -54,6 +54,10 @@ public class FileDownloader {
         this.mHandler = new Handler(this.context.getMainLooper());
     }
 
+    public int getDownloadStatus() {
+        return downloadStatus;
+    }
+
     protected void pause() {
         this.targetStatus = FileDownloader.DOWNLOAD_STATUS_PAUSE;
     }
@@ -67,6 +71,10 @@ public class FileDownloader {
     }
 
     protected void start(final DownloaderConfig config) {
+        if (targetStatus != DOWNLOAD_STATUS_NONE) {
+            LogUtils.d(TAG, "this file is downloading.");
+            return;
+        }
         new Thread() {
             @Override
             public void run() {
@@ -163,6 +171,8 @@ public class FileDownloader {
                         continue;
                     case DOWNLOAD_STATUS_STOP:
                         stopDownload();
+                        this.saveFile.delete();
+                        downloadDBHelper.delete(this.config.getDownloadUrl());
                         return;
                     case DOWNLOAD_STATUS_START:
                         this.downloadStatus = DOWNLOAD_STATUS_START;
@@ -175,7 +185,7 @@ public class FileDownloader {
                 for (int i = 0; i < this.threads.length; i++) {
                     if (this.threads[i] != null && !this.threads[i].isFinish()) {
                         notFinish = true;
-                        if (this.threads[i].getDownloadLength() == -1) {//Restart the download threads when thread exception
+                        if (this.threads[i].getDownloadLength() == -1 || this.threads[i].isInterrupt()) {//Restart the download threads when thread exception
                             this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block, this.data.get(i), i);
                             this.threads[i].setPriority(7);
                             this.threads[i].start();
@@ -185,7 +195,7 @@ public class FileDownloader {
                 onDownloadSize(this.downloadSize, calculatePercent(), calculateSpeed(startTime, System.currentTimeMillis()));
                 this.lastDownloadSize = this.downloadSize;
             }
-            onDownloadSize(this.downloadSize, 100.0f, 0.0f);//update download speed to zero after download complete.
+            onDownloadSize(this.downloadSize, 100f, 0f);//update download speed to zero after download complete.
             downloadDBHelper.delete(this.config.getDownloadUrl());
             if (this.downloadSize == this.fileSize) {
                 this.downloadStatus = DOWNLOAD_STATUS_NONE;
@@ -334,6 +344,7 @@ public class FileDownloader {
             }
         }
         downloadStatus = DOWNLOAD_STATUS_PAUSE;
+        onDownloadSize(this.downloadSize, calculatePercent(), 0f);
     }
 
     private void stopDownload() {
@@ -356,6 +367,7 @@ public class FileDownloader {
             }
         }
         this.downloadStatus = DOWNLOAD_STATUS_STOP;
+        onDownloadSize(0, 0f, 0f);
     }
 
     public void addDownloadProgressListener(DownloadProgressListener listener) {

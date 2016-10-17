@@ -65,8 +65,8 @@ public class DownloadThread extends Thread {
                     this.downloadLength += offset;
                     this.fileDownloader.append(offset);
                     this.fileDownloader.update(this.threadId, this.downloadLength);
-//                    LogUtils.d(TAG, "Thread" + this.threadId + " downloadLength=" + this.downloadLength + ", offset=" + offset);
-                    if (isInterrupt) {
+                    LogUtils.d(TAG, "Thread" + this.threadId + " downloadLength=" + this.downloadLength + ", offset=" + offset);
+                    if (isInterrupt) {                this.downloadLength = -1;
                         LogUtils.d(TAG, "Thread " + this.threadId + " download interrupt.");
                         break;
                     }
@@ -98,6 +98,10 @@ public class DownloadThread extends Thread {
 
     public void interruptDownload() {
         this.isInterrupt = true;
+    }
+
+    public boolean isInterrupt() {
+        return isInterrupt;
     }
 
     public boolean isFinish() {
