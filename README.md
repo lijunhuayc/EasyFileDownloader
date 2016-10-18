@@ -1,41 +1,76 @@
 # EasyFileDownloader
-一个用于android中的轻量级文件下载器、特别适合应用内升级下载APK
+A lightweight for use in the android file downloader Download the APK is especially suitable for application in upgrade
 
-### 用法：
+### Usage
+1、add the followings to your build.gradle file
+
 ```java
-new WolfDownloader(context)
-        .setThreadNum(3)
-        .setDownloadUrl(path)
-        .setSaveDir(Environment.getExternalStorageDirectory())
-        .addDownloadListener(new DownloadProgressListener() {
-            @Override
-            public void onDownloadTotalSize(int totalSize) {
-                progressBar.setMax(totalSize);//设置进度条的最大刻度为文件的长度
-            }
+compile 'com.lijunhuayc.downloader:easyfiledownloader:1.0.3'
+```
 
-            @Override
-            public void updateDownloadProgress(int size, float percent, float speed) {
-                StringBuilder sBuilder = new StringBuilder();
-                sBuilder.append("  ").append(FileDownloader.formatSpeed(speed));
-                sBuilder.append("  ").append(String.valueOf(percent + "%"));
-                sBuilder.append("  ").append(FileDownloader.formatSize(size)).append("/")
-                        .append(FileDownloader.formatSize(progressBar.getMax()));
-                resultView.setText(sBuilder.toString());
-                progressBar.setProgress(size);
+2、Using the library is really simple, just look at the source code of the provided sample.
+```java
+WolfDownloader wolfDownloader = new WolfDownloader(context)
+                    .setThreadNum(3)
+                    .setDownloadUrl(path)
+                    .setSaveDir(Environment.getExternalStorageDirectory())
+                    .addDownloadListener(new DownloadProgressListener() {
+                        @Override
+                        public void onDownloadTotalSize(int totalSize) {
+                            progressBar.setMax(totalSize);//设置进度条的最大刻度为文件的长度
+                        }
 
-            }
+                        @Override
+                        public void updateDownloadProgress(int size, float percent, float speed) {
+                            StringBuilder sBuilder = new StringBuilder();
+                            sBuilder.append("  ").append(FileDownloader.formatSpeed(speed));
+                            sBuilder.append("  ").append(String.valueOf(percent + "%"));
+                            sBuilder.append("  ").append(FileDownloader.formatSize(size)).append("/")
+                                    .append(FileDownloader.formatSize(progressBar.getMax()));
+                            resultView.setText(sBuilder.toString());
+                            progressBar.setProgress(size);
 
-            @Override
-            public void onDownloadSuccess(String apkPath) {
-                Toast.makeText(MainActivity.this, "下载成功\n" + apkPath, Toast.LENGTH_SHORT).show();
-            }
+                        }
 
-            @Override
-            public void onDownloadFailed() {
-                Toast.makeText(MainActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
-            }
-        })
-        .startDownload();
+                        @Override
+                        public void onDownloadSuccess(String apkPath) {
+                            Toast.makeText(MainActivity.this, "下载成功\n" + apkPath, Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onDownloadFailed() {
+                            Toast.makeText(MainActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onPauseDownload() {
+
+                        }
+
+                        @Override
+                        public void onStopDownload() {
+
+                        }
+                    });
+            wolfDownloader.startDownload();
+```
+```java
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.startBt:
+                startDownload();
+                break;
+            case R.id.pauseBt:
+                wolfDownloader.pauseDownload();
+                break;
+            case R.id.continueBt:
+                wolfDownloader.restartDownload();
+                break;
+            case R.id.stopBt:
+                wolfDownloader.stopDownload();
+                break;
+        }
+    }
 ```
 
 License
