@@ -28,7 +28,7 @@ publish {
     userOrg = 'lijunhua'//bintray.com用户名
     groupId = 'com.lijunhuayc.downloader'//jcenter上的路径
     artifactId = 'easyfiledownloader'//项目名称
-    publishVersion = '1.0.2'//版本号
+    publishVersion = '1.0.3'//版本号
     desc = 'Oh hi, this is a nice description for a project, right?'
     website = 'https://github.com/lijunhuayc/EasyFileDownloader'
 
