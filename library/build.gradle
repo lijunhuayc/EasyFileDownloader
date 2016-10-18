@@ -31,5 +31,5 @@ publish {
     publishVersion = '1.0.3'//版本号
     desc = 'Oh hi, this is a nice description for a project, right?'
     website = 'https://github.com/lijunhuayc/EasyFileDownloader'
-
+    licences = ['Apache-2.0']
 }
