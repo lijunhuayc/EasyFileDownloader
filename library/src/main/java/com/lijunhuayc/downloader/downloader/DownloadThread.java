@@ -56,16 +56,15 @@ public class DownloadThread extends Thread {
 
                 inStream = httpURLConnection.getInputStream();
                 byte[] buffer = new byte[1024 * 1024];
-                int offset = 0;
-
+                int len;
                 randomAccessFile = new RandomAccessFile(this.saveFile, "rwd");
                 randomAccessFile.seek(startPos);
-                while ((offset = inStream.read(buffer, 0, buffer.length)) != -1) {
-                    randomAccessFile.write(buffer, 0, offset);
-                    this.downloadLength += offset;
-                    this.fileDownloader.append(offset);
+                while ((len = inStream.read(buffer, 0, buffer.length)) != -1) {
+                    randomAccessFile.write(buffer, 0, len);
+                    this.downloadLength += len;
+                    this.fileDownloader.append(len);
                     this.fileDownloader.update(this.threadId, this.downloadLength);
-                    LogUtils.d(TAG, "Thread" + this.threadId + " downloadLength=" + this.downloadLength + ", offset=" + offset);
+                    LogUtils.d(TAG, "Thread" + this.threadId + " downloadLength=" + this.downloadLength + ", len=" + len);
                     if (isInterrupt) {                this.downloadLength = -1;
                         LogUtils.d(TAG, "Thread " + this.threadId + " download interrupt.");
                         break;

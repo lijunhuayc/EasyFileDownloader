@@ -12,7 +12,6 @@ import android.text.TextUtils;
  */
 public abstract class BaseDBManager {
     protected static final String TAG = BaseDBManager.class.getName();
-    public static final String DEFAULT_DB_NAME = "easy_file_downloader.db";
     private int version = 1;
     protected String databaseName;
     protected Context mContext = null;
@@ -20,7 +19,7 @@ public abstract class BaseDBManager {
     public BaseDBManager(Context mContext, String dbName) {
         this.mContext = mContext;
         if (TextUtils.isEmpty(dbName)) {
-            this.databaseName = DEFAULT_DB_NAME;
+            this.databaseName = DBOpenHelper.DEFAULT_DB_NAME;
         } else {
             this.databaseName = dbName;
         }

@@ -4,7 +4,9 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.widget.Toast;
 
+import com.lijunhuayc.downloader.db.DBOpenHelper;
 import com.lijunhuayc.downloader.db.DownloadDBHelper;
 import com.lijunhuayc.downloader.utils.LogUtils;
 
@@ -18,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,18 +30,19 @@ import java.util.regex.Pattern;
  */
 public class FileDownloader {
     private static final String TAG = FileDownloader.class.getSimpleName();
-    protected static final int DOWNLOAD_STATUS_NONE = -1;//Did not start the download or the download is complete.
-    protected static final int DOWNLOAD_STATUS_START = 1;//downloading
-    protected static final int DOWNLOAD_STATUS_PAUSE = 2;//download pause
-    protected static final int DOWNLOAD_STATUS_STOP = 3;//download stop
-    private Context context;
+    public static final int DOWNLOAD_STATUS_NONE = -1;//Did not start the download or the download is complete.
+    public static final int DOWNLOAD_STATUS_START = 1;//downloading
+    public static final int DOWNLOAD_STATUS_PAUSE = 2;//download pause.(download records exist.)
+    public static final int DOWNLOAD_STATUS_STOP = 3;//download stop
+    private Context mContext;
     private DownloadDBHelper downloadDBHelper;
-    private List<DownloadProgressListener> progressListeners = new ArrayList<>();
+    private DownloadProgressListener progressListener;
     private DownloaderConfig config;
     private int fileSize = 0;
     private DownloadThread[] threads;
     private File saveFile;
-    private Map<Integer, Integer> data = new ConcurrentHashMap<>();
+    //    private Map<Integer, Integer> data = new ConcurrentHashMap<>();
+    private List<ThreadData> data = new ArrayList<>();
     private int downloadSize = 0;
     private int lastDownloadSize = 0;//The last time update download progress
     private int block;
@@ -49,9 +51,30 @@ public class FileDownloader {
     private int targetStatus = DOWNLOAD_STATUS_NONE; //
 
     public FileDownloader(Context mContext) {
-        this.context = mContext;
-        this.downloadDBHelper = DownloadDBHelper.getInstance(mContext, "file_download.db");
-        this.mHandler = new Handler(this.context.getMainLooper());
+        this.mContext = mContext;
+        this.downloadDBHelper = DownloadDBHelper.getInstance(mContext, DBOpenHelper.DEFAULT_DB_NAME);
+        this.mHandler = new Handler(this.mContext.getMainLooper());
+    }
+
+    public void readHistory(HistoryCallback historyCallback) {
+        DownloadDBHelper downloadDBHelper = DownloadDBHelper.getInstance(mContext, DBOpenHelper.DEFAULT_DB_NAME);
+        List<ThreadData> threadDataList = downloadDBHelper.query(this.config.getDownloadUrl());
+        int total = 0;
+        if (null != threadDataList && threadDataList.size() == this.config.getThreadNum()) {
+            int fileSize = threadDataList.get(0).getFileSize();
+            for (ThreadData threadData : threadDataList) {
+                total += threadData.getDownloadLength();
+            }
+            historyCallback.onReadHistory(total, fileSize);
+        } else {
+            historyCallback.onReadHistory(0, 0);
+        }
+
+    }
+
+    protected void setConfig(DownloaderConfig config) {
+        this.config = config;
+        this.progressListener = this.config.getDownloadListener();
     }
 
     public int getDownloadStatus() {
@@ -70,22 +93,21 @@ public class FileDownloader {
         this.targetStatus = FileDownloader.DOWNLOAD_STATUS_START;
     }
 
-    protected void start(final DownloaderConfig config) {
-        if (targetStatus != DOWNLOAD_STATUS_NONE) {
+    protected void start() {
+        if (downloadStatus != DOWNLOAD_STATUS_NONE && downloadStatus != DOWNLOAD_STATUS_STOP) {
             LogUtils.d(TAG, "this file is downloading.");
             return;
         }
         new Thread() {
             @Override
             public void run() {
-                prepareDownload(config);
+                prepareDownload();
             }
         }.start();
     }
 
-    private void prepareDownload(DownloaderConfig config) {
+    private void prepareDownload() {
         this.targetStatus = DOWNLOAD_STATUS_START;
-        this.config = config;
         this.threads = new DownloadThread[config.getThreadNum()];
         if (!this.config.getSaveDir().exists()) {
             if (!this.config.getSaveDir().mkdirs()) {
@@ -108,35 +130,30 @@ public class FileDownloader {
         } catch (IOException e) {
             e.printStackTrace();
             LogUtils.d(TAG, "open HttpURLConnection failed.");
+            Toast.makeText(mContext, "open url failed.", Toast.LENGTH_SHORT).show();
+            onDownloadFailed();
             return;
         }
 
         this.saveFile = new File(this.config.getSaveDir(), getFileName(urlConn, config.getDownloadUrl()));
-        Map<Integer, Integer> recordMap = downloadDBHelper.query(config.getDownloadUrl());
-        if (recordMap.size() > 0) {
-            for (Map.Entry<Integer, Integer> entry : recordMap.entrySet()) {
-                this.data.put(entry.getKey(), entry.getValue());
-            }
-        }
+        this.data = new ArrayList<>(downloadDBHelper.query(config.getDownloadUrl()));
         if (this.data.size() == this.threads.length) {
-            for (int i = 0; i < this.threads.length; i++) {
-                this.downloadSize += this.data.get(i);
+            for (ThreadData threadData : this.data) {
+                this.downloadSize += threadData.getDownloadLength();
             }
             LogUtils.d(TAG, "history download size = " + this.downloadSize);
         } else {
             this.data.clear();
             for (int i = 0; i < this.threads.length; i++) {
-                this.data.put(i, 0);//Initialize each thread has downloaded data length is zero
+                this.data.add(new ThreadData(i, this.fileSize));//Initialize each thread has downloaded data length is zero
             }
             this.downloadSize = 0;
             this.downloadDBHelper.save(this.config.getDownloadUrl(), this.data);//first save
         }
-
         //Calculating the maximum length of data download each thread
         this.block = (this.fileSize % this.threads.length) == 0 ?
                 this.fileSize / this.threads.length :
                 this.fileSize / this.threads.length + 1;
-
         executeDownload();
     }
 
@@ -151,9 +168,10 @@ public class FileDownloader {
             URL url = new URL(this.config.getDownloadUrl());
 
             for (int i = 0; i < this.threads.length; i++) {//Open a thread to download
-                int downLength = this.data.get(i);
+                int downLength = this.data.get(i).getDownloadLength();
                 if (downLength < this.block && this.downloadSize < this.fileSize) {
-                    this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block, this.data.get(i), i);
+                    this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block,
+                            this.data.get(i).getDownloadLength(), this.data.get(i).getThreadId());
                     this.threads[i].setPriority(7);
                     this.threads[i].start();
                 } else {
@@ -186,13 +204,15 @@ public class FileDownloader {
                     if (this.threads[i] != null && !this.threads[i].isFinish()) {
                         notFinish = true;
                         if (this.threads[i].getDownloadLength() == -1 || this.threads[i].isInterrupt()) {//Restart the download threads when thread exception
-                            this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block, this.data.get(i), i);
+                            this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block,
+                                    this.data.get(i).getDownloadLength(), this.data.get(i).getThreadId());
                             this.threads[i].setPriority(7);
                             this.threads[i].start();
                         }
                     }
                 }
-                onDownloadSize(this.downloadSize, calculatePercent(), calculateSpeed(startTime, System.currentTimeMillis()));
+                onDownloadSize(this.downloadSize, calculatePercent(this.downloadSize, this.fileSize),
+                        calculateSpeed(startTime, System.currentTimeMillis()));
                 this.lastDownloadSize = this.downloadSize;
             }
             onDownloadSize(this.downloadSize, 100f, 0f);//update download speed to zero after download complete.
@@ -217,7 +237,8 @@ public class FileDownloader {
         try {
             URL url = new URL(downloadUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(10 * 1000);
+            conn.setConnectTimeout(5 * 1000);
+            conn.setReadTimeout(5 * 1000);
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "image/gif, image/jpeg, image/pjpeg, image/pjpeg, application/x-shockwave-flash, application/xaml+xml, application/vnd.ms-xpsdocument, application/x-ms-xbap, application/x-ms-application, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*");
             conn.setRequestProperty("Accept-Language", "zh-CN");
@@ -230,8 +251,10 @@ public class FileDownloader {
             return conn;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("don't connection this url.");
+            LogUtils.e(TAG, "don't connection this url.");
+//            throw new RuntimeException("don't connection this url.");
         }
+        return null;
     }
 
     private String getFileName(HttpURLConnection conn, String url) {
@@ -255,124 +278,104 @@ public class FileDownloader {
     }
 
     private void onDownloadSize(final int size, final float percent, final float speed) {
-        for (final DownloadProgressListener listener : progressListeners) {
-            if (null != listener) {
-                if (Looper.myLooper() != Looper.getMainLooper()) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listener.updateDownloadProgress(size, percent, speed);
-                        }
-                    });
-                } else {
-                    listener.updateDownloadProgress(size, percent, speed);
-                }
+        if (null != progressListener) {
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressListener.updateDownloadProgress(size, percent, speed);
+                    }
+                });
+            } else {
+                progressListener.updateDownloadProgress(size, percent, speed);
             }
         }
     }
 
     private void onDownloadTotalSize(final int totalSize) {
-        for (final DownloadProgressListener listener : progressListeners) {
-            if (null != listener) {
-                if (Looper.myLooper() != Looper.getMainLooper()) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listener.onDownloadTotalSize(totalSize);
-                        }
-                    });
-                } else {
-                    listener.onDownloadTotalSize(totalSize);
-                }
+        if (null != progressListener) {
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressListener.onDownloadTotalSize(totalSize);
+                    }
+                });
+            } else {
+                progressListener.onDownloadTotalSize(totalSize);
             }
         }
     }
 
     private void onDownloadSuccess(final String apkPath) {
-        if (null == progressListeners) return;
-        for (final DownloadProgressListener listener : progressListeners) {
-            if (null != listener) {
-                if (Looper.myLooper() != Looper.getMainLooper()) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listener.onDownloadSuccess(apkPath);
-                        }
-                    });
-                } else {
-                    listener.onDownloadSuccess(apkPath);
-                }
+        if (null != progressListener) {
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressListener.onDownloadSuccess(apkPath);
+                    }
+                });
+            } else {
+                progressListener.onDownloadSuccess(apkPath);
             }
         }
     }
 
     private void onDownloadFailed() {
-        if (null == progressListeners) return;
-        for (final DownloadProgressListener listener : progressListeners) {
-            if (null != listener) {
-                if (Looper.myLooper() != Looper.getMainLooper()) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listener.onDownloadFailed();
-                        }
-                    });
-                } else {
-                    listener.onDownloadFailed();
-                }
+        if (null != progressListener) {
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressListener.onDownloadFailed();
+                    }
+                });
+            } else {
+                progressListener.onDownloadFailed();
             }
         }
     }
 
     private void pauseDownload() {
-        if (null == progressListeners || downloadStatus == DOWNLOAD_STATUS_PAUSE) return;
+        if (downloadStatus == DOWNLOAD_STATUS_PAUSE) return;
         for (int i = 0; i < this.threads.length; i++) {
             threads[i].interruptDownload();
         }
-        for (final DownloadProgressListener listener : progressListeners) {
-            if (null != listener) {
-                if (Looper.myLooper() != Looper.getMainLooper()) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listener.onPauseDownload();
-                        }
-                    });
-                } else {
-                    listener.onPauseDownload();
-                }
+        downloadStatus = DOWNLOAD_STATUS_PAUSE;
+        onDownloadSize(this.downloadSize, calculatePercent(this.downloadSize, this.fileSize), 0f);
+        if (null != progressListener) {
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressListener.onPauseDownload();
+                    }
+                });
+            } else {
+                progressListener.onPauseDownload();
             }
         }
-        downloadStatus = DOWNLOAD_STATUS_PAUSE;
-        onDownloadSize(this.downloadSize, calculatePercent(), 0f);
     }
 
     private void stopDownload() {
-        if (null == progressListeners || downloadStatus == DOWNLOAD_STATUS_STOP) return;
+        if (downloadStatus == DOWNLOAD_STATUS_STOP) return;
         for (int i = 0; i < this.threads.length; i++) {
             threads[i].interruptDownload();
         }
-        for (final DownloadProgressListener listener : progressListeners) {
-            if (null != listener) {
-                if (Looper.myLooper() != Looper.getMainLooper()) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listener.onStopDownload();
-                        }
-                    });
-                } else {
-                    listener.onStopDownload();
-                }
-            }
-        }
         this.downloadStatus = DOWNLOAD_STATUS_STOP;
         onDownloadSize(0, 0f, 0f);
-    }
-
-    public void addDownloadProgressListener(DownloadProgressListener listener) {
-        if (null != listener) {
-            progressListeners.add(listener);
+        if (null != progressListener) {
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressListener.onStopDownload();
+                    }
+                });
+            } else {
+                progressListener.onStopDownload();
+            }
         }
     }
 
@@ -380,8 +383,13 @@ public class FileDownloader {
         downloadSize += size;
     }
 
-    protected synchronized void update(int threadId, int pos) {
-        this.data.put(threadId, pos);
+    protected synchronized void update(int threadId, int downloadLength) {
+        for (ThreadData threadData : this.data) {
+            if (threadData.getThreadId() == threadId) {
+                threadData.setDownloadLength(downloadLength);
+                break;
+            }
+        }
         this.downloadDBHelper.update(this.config.getDownloadUrl(), this.data);
     }
 
@@ -454,8 +462,8 @@ public class FileDownloader {
      *
      * @return
      */
-    private float calculatePercent() {
-        float num = (float) this.downloadSize / this.fileSize;
+    public static float calculatePercent(int downloadSize, int fileSize) {
+        float num = (float) downloadSize / fileSize;
         float percent = ((float) (int) (num * 1000)) / 10;
 //        LogUtils.d(TAG, "download percent = " + percent + "%");
         return percent;

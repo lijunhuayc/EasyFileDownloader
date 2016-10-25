@@ -1,6 +1,8 @@
 package com.lijunhuayc.downloader.downloader;
 
+import android.content.Context;
 import android.os.Environment;
+import android.text.TextUtils;
 
 import java.io.File;
 
@@ -14,6 +16,7 @@ public class DownloaderConfig {
     private File saveDir;
     private String downloadUrl;
     private int threadNum;
+    private DownloadProgressListener downloadListener;
 
     public DownloaderConfig() {
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -26,25 +29,49 @@ public class DownloaderConfig {
         return saveDir;
     }
 
-    public void setSaveDir(File saveDir) {
+    public DownloaderConfig setSaveDir(File saveDir) {
+        if (null == saveDir) {
+            throw new IllegalArgumentException("the saveDir is not allow null.");
+        }
         this.saveDir = saveDir;
+        return this;
     }
 
     public String getDownloadUrl() {
         return downloadUrl;
     }
 
-    public void setDownloadUrl(String downloadUrl) {
+    public DownloaderConfig setDownloadUrl(String downloadUrl) {
+        if (TextUtils.isEmpty(downloadUrl.trim())) {
+            throw new IllegalArgumentException("the downloadUrl is not allow null.");
+        }
         this.downloadUrl = downloadUrl;
+        return this;
     }
 
     public int getThreadNum() {
         return threadNum;
     }
 
-    public void setThreadNum(int threadNum) {
+    public DownloaderConfig setThreadNum(int threadNum) {
+        if (threadNum < 1 || threadNum > 5) {
+            throw new IllegalArgumentException("the threadNum between 1-5.");
+        }
         this.threadNum = threadNum;
+        return this;
     }
 
+    public DownloaderConfig addDownloadListener(DownloadProgressListener downloadListener) {
+        this.downloadListener = downloadListener;
+        return this;
+    }
+
+    public DownloadProgressListener getDownloadListener() {
+        return downloadListener;
+    }
+
+    public WolfDownloader buildWolf(Context mContext) {
+        return new WolfDownloader(mContext, this);
+    }
 
 }
