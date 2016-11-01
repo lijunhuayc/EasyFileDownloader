@@ -12,8 +12,10 @@ import java.io.File;
  * Email: lijunhuayc@sina.com
  */
 public class DownloaderConfig {
+    public static final String TAG = DownloaderConfig.class.getSimpleName();
     public static final int DEFAULT_THREAD_NUM = 3;
     private File saveDir;
+    private String fileName;
     private String downloadUrl;
     private int threadNum;
     private DownloadProgressListener downloadListener;
@@ -23,6 +25,19 @@ public class DownloaderConfig {
             this.saveDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         }
         this.threadNum = DEFAULT_THREAD_NUM;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    /**
+     *  Not check file name, please use it correctly. eg: 'fileName.apk' or 'temp' or 'te_st.tmp'.
+     *  not allow for like 'af*2w#.txt' ...
+     * @param fileName
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public File getSaveDir() {

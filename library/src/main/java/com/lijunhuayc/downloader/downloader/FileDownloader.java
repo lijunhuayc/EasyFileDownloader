@@ -135,7 +135,11 @@ public class FileDownloader {
             return;
         }
 
-        this.saveFile = new File(this.config.getSaveDir(), getFileName(urlConn, config.getDownloadUrl()));
+        String fileName = this.config.getFileName();
+        if (TextUtils.isEmpty(fileName)) {
+            fileName = getFileName(urlConn, config.getDownloadUrl());
+        }
+        this.saveFile = new File(this.config.getSaveDir(), fileName);
         LogUtils.d(TAG, "saveFile.path = " + this.saveFile.getPath());
         this.data = new ArrayList<>(downloadDBHelper.query(config.getDownloadUrl()));
         if (this.data.size() == this.threads.length) {
