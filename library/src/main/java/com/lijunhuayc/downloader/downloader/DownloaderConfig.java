@@ -61,7 +61,7 @@ public class DownloaderConfig {
         return this;
     }
 
-    public DownloaderConfig addDownloadListener(DownloadProgressListener downloadListener) {
+    public DownloaderConfig setDownloadListener(DownloadProgressListener downloadListener) {
         this.downloadListener = downloadListener;
         return this;
     }

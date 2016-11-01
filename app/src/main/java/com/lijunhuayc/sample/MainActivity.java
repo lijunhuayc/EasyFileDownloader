@@ -59,7 +59,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 .setThreadNum(3)
                 .setDownloadUrl(path)
                 .setSaveDir(saveDir)
-                .addDownloadListener(new DownloadProgressListener() {
+                .setDownloadListener(new DownloadProgressListener() {
                     @Override
                     public void onDownloadTotalSize(int totalSize) {
                         progressBar.setMax(totalSize);//设置进度条的最大刻度为文件的长度
