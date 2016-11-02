@@ -36,8 +36,9 @@ public class DownloaderConfig {
      *  not allow for like 'af*2w#.txt' ...
      * @param fileName
      */
-    public void setFileName(String fileName) {
+    public DownloaderConfig setFileName(String fileName) {
         this.fileName = fileName;
+        return this;
     }
 
     public File getSaveDir() {
