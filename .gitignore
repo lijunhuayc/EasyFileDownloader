@@ -4,6 +4,7 @@
 /.idea/workspace.xml
 /.idea/libraries
 /build
+/.idea
 gradlew
 gradlew.bat
 LICENSE
