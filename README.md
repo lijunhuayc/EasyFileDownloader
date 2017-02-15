@@ -3,6 +3,109 @@ A lightweight for use in the android file downloader Download the APK is especia
 
 ## Usage
 
+### version 1.1.5
+1、add the followings to your build.gradle file
+
+```java
+compile 'com.lijunhuayc.downloader:easyfiledownloader:1.1.1'
+```
+
+2、Using the library is really simple, just look at the source code of the provided sample.
+```java
+//...
+        String path = downloadpathText.getText().toString();
+        File saveDir = null;
+        System.out.println(Environment.getExternalStorageState() + "------" + Environment.MEDIA_MOUNTED);
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {//开始下载文件
+            saveDir = Environment.getExternalStorageDirectory();
+        } else {
+            Toast.makeText(MainActivity.this, "SDCard不存在或者写保护", Toast.LENGTH_SHORT).show();
+        }
+
+        wolfDownloader = new DownloaderConfig()
+                .setThreadNum(3)
+                .setDownloadUrl(path)
+                .setSaveDir(saveDir)
+                .setDownloadListener(new DownloadProgressListener() {
+                    @Override
+                    public void onDownloadTotalSize(int totalSize) {
+                        progressBar.setMax(totalSize);//设置进度条的最大刻度为文件的长度
+                    }
+
+                    @Override
+                    public void updateDownloadProgress(int size, float percent, float speed) {
+                        resultView.setText(getFormatStr(size, percent, speed));
+                        progressBar.setProgress(size);
+                    }
+
+                    @Override
+                    public void onDownloadSuccess(String apkPath) {
+                        Toast.makeText(MainActivity.this, "下载成功\n" + apkPath, Toast.LENGTH_SHORT).show();
+                        startBt.setText("开始");
+                        stopBt.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onDownloadFailed() {
+                        Toast.makeText(MainActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
+                        startBt.setText("开始");
+                    }
+
+                    @Override
+                    public void onPauseDownload() {
+                        Toast.makeText(MainActivity.this, "下载暂停", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onStopDownload() {
+                        Toast.makeText(MainActivity.this, "下载停止", Toast.LENGTH_SHORT).show();
+                        startBt.setText("开始");
+                        stopBt.setVisibility(View.GONE);
+                    }
+                })
+                .buildWolf(context);
+
+
+        wolfDownloader.readHistory(new HistoryCallback() {
+            @Override
+            public void onReadHistory(int downloadLength, int fileSize) {
+                if (fileSize != 0) {
+                    progressBar.setMax(fileSize);
+                    progressBar.setProgress(downloadLength);
+                    resultView.setText(getFormatStr(downloadLength, FileDownloader.calculatePercent(downloadLength, fileSize), 0));
+                }
+            }
+        });
+```
+```java
+        switch (view.getId()) {
+            case R.id.startBt:
+                switch (startBt.getText().toString()) {
+                    case "开始":
+                        wolfDownloader.startDownload();
+                        startBt.setText("暂停");
+                        stopBt.setVisibility(View.VISIBLE);
+                        break;
+                    case "继续":
+                        wolfDownloader.restartDownload();
+                        startBt.setText("暂停");
+                        break;
+                    case "暂停":
+                        wolfDownloader.pauseDownload();
+                        startBt.setText("继续");
+                        break;
+                }
+                break;
+            case R.id.stopBt:
+                wolfDownloader.stopDownload();//停止下载会删除下载记录
+                break;
+            case R.id.exitBt:
+                wolfDownloader.exitDownload();//退出下载，保存下载记录
+                break;
+        }
+```
+
+
 ### version 1.1.1
 1、add the followings to your build.gradle file
 
@@ -150,7 +253,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 ### version 1.0.3
 1、add the followings to your build.gradle file
 
-```java
+```
 compile 'com.lijunhuayc.downloader:easyfiledownloader:1.0.3'
 ```
 

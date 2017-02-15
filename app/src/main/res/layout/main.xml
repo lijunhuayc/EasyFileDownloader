@@ -43,6 +43,12 @@
         android:layout_height="wrap_content"
         android:text="停止" />
 
+    <Button
+        android:id="@+id/exitBt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="退出" />
+
     <!-- 进度条 -->
     <ProgressBar
         android:id="@+id/downloadbar"

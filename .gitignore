@@ -1,10 +1,10 @@
 *.iml
 .gradle
 .idea
-/local.properties
-#/.idea/workspace.xml
-#/.idea/libraries
-/build
+build
+gradle
+gradle.properties
 gradlew
 gradlew.bat
 LICENSE
+settings.gradle

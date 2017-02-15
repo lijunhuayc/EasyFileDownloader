@@ -16,7 +16,7 @@ public class WolfDownloader {
         this.fileDownloader.setConfig(config);
     }
 
-    public void readHistory(HistoryCallback historyCallback){
+    public void readHistory(HistoryCallback historyCallback) {
         this.fileDownloader.readHistory(historyCallback);
     }
 
@@ -34,6 +34,10 @@ public class WolfDownloader {
 
     public void stopDownload() {
         fileDownloader.stop();
+    }
+
+    public void exitDownload() {
+        fileDownloader.exit();
     }
 
 }

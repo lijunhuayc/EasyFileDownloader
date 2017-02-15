@@ -24,6 +24,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private TextView resultView;
     private TextView startBt;
     private TextView stopBt;
+    private TextView exitBt;
     private ProgressBar progressBar;
     private Context context;
     WolfDownloader wolfDownloader;
@@ -43,8 +44,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         startBt = (TextView) findViewById(R.id.startBt);
         stopBt = (TextView) findViewById(R.id.stopBt);
+        exitBt = (TextView) findViewById(R.id.exitBt);
         startBt.setOnClickListener(this);
         stopBt.setOnClickListener(this);
+        exitBt.setOnClickListener(this);
 
         String path = downloadpathText.getText().toString();
         File saveDir = null;
@@ -140,7 +143,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 }
                 break;
             case R.id.stopBt:
-                wolfDownloader.stopDownload();
+                wolfDownloader.stopDownload();//停止下载会删除下载记录
+                break;
+            case R.id.exitBt:
+                wolfDownloader.exitDownload();//退出下载，保存下载记录
                 break;
         }
     }

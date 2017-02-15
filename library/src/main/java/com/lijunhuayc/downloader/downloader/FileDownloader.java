@@ -34,6 +34,7 @@ public class FileDownloader {
     public static final int DOWNLOAD_STATUS_START = 1;//downloading
     public static final int DOWNLOAD_STATUS_PAUSE = 2;//download pause.(download records exist.)
     public static final int DOWNLOAD_STATUS_STOP = 3;//download stop
+    public static final int DOWNLOAD_STATUS_EXIT = 4;//download exit
     private Context mContext;
     private DownloadDBHelper downloadDBHelper;
     private DownloadProgressListener progressListener;
@@ -83,19 +84,27 @@ public class FileDownloader {
 
     protected void pause() {
         this.targetStatus = FileDownloader.DOWNLOAD_STATUS_PAUSE;
+        LogUtils.d(TAG, "this file is pause download.");
     }
 
     protected void stop() {
         this.targetStatus = FileDownloader.DOWNLOAD_STATUS_STOP;
+        LogUtils.d(TAG, "this file is stop download.");
+    }
+
+    protected void exit() {
+        this.targetStatus = FileDownloader.DOWNLOAD_STATUS_EXIT;
+        LogUtils.d(TAG, "this file is exit download.");
     }
 
     protected void restart() {
         this.targetStatus = FileDownloader.DOWNLOAD_STATUS_START;
+        LogUtils.d(TAG, "this file is restart download.");
     }
 
     protected void start() {
         if (downloadStatus != DOWNLOAD_STATUS_NONE && downloadStatus != DOWNLOAD_STATUS_STOP) {
-            LogUtils.d(TAG, "this file is downloading.");
+            LogUtils.d(TAG, "this file is start download.");
             return;
         }
         new Thread() {
@@ -192,10 +201,12 @@ public class FileDownloader {
                     case DOWNLOAD_STATUS_PAUSE:
                         pauseDownload();
                         continue;
-                    case DOWNLOAD_STATUS_STOP:
+                    case DOWNLOAD_STATUS_EXIT:
                         stopDownload();
-                        this.saveFile.delete();
+                        return;
+                    case DOWNLOAD_STATUS_STOP:
                         downloadDBHelper.delete(this.config.getDownloadUrl());
+                        this.saveFile.delete();
                         return;
                     case DOWNLOAD_STATUS_START:
                         this.downloadStatus = DOWNLOAD_STATUS_START;
