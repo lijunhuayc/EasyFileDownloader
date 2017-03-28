@@ -7,7 +7,7 @@ A lightweight for use in the android file downloader Download the APK is especia
 1、add the followings to your build.gradle file
 
 ```java
-compile 'com.lijunhuayc.downloader:easyfiledownloader:1.1.1'
+compile 'com.lijunhuayc.downloader:easyfiledownloader:1.1.5'
 ```
 
 2、Using the library is really simple, just look at the source code of the provided sample.
