@@ -6,7 +6,7 @@ package com.lijunhuayc.downloader.downloader;
  * Email: lijunhuayc@sina.com
  */
 public interface DownloadProgressListener {
-    void onDownloadTotalSize(int totalSize);
+    void onDownloadTotalSize(long totalSize);
 
     /**
      * Real-time update downloading progress
@@ -15,7 +15,7 @@ public interface DownloadProgressListener {
      * @param percent downloading percent(%)
      * @param speed   downloading speed(KB/S)
      */
-    void updateDownloadProgress(int size, float percent, float speed);
+    void updateDownloadProgress(long size, float percent, float speed);
 
     void onDownloadSuccess(String apkPath);
 

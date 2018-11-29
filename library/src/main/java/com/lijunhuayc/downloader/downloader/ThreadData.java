@@ -7,10 +7,10 @@ package com.lijunhuayc.downloader.downloader;
  */
 public class ThreadData {
     private int threadId;
-    private int downloadLength;
-    private int fileSize;
+    private long downloadLength;
+    private long fileSize;
 
-    public ThreadData(int threadId, int fileSize) {
+    public ThreadData(int threadId, long fileSize) {
         this.threadId = threadId;
         this.fileSize = fileSize;
     }
@@ -23,19 +23,19 @@ public class ThreadData {
         this.threadId = threadId;
     }
 
-    public int getDownloadLength() {
+    public long getDownloadLength() {
         return downloadLength;
     }
 
-    public void setDownloadLength(int downloadLength) {
+    public void setDownloadLength(long downloadLength) {
         this.downloadLength = downloadLength;
     }
 
-    public int getFileSize() {
+    public long getFileSize() {
         return fileSize;
     }
 
-    public void setFileSize(int fileSize) {
+    public void setFileSize(long fileSize) {
         this.fileSize = fileSize;
     }
 

@@ -6,5 +6,5 @@ package com.lijunhuayc.downloader.downloader;
  * Email: lijunhuayc@sina.com
  */
 public interface HistoryCallback {
-    void onReadHistory(int downloadLength, int fileSize);
+    void onReadHistory(long downloadLength, long fileSize);
 }

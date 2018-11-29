@@ -39,14 +39,14 @@ public class FileDownloader {
     private DownloadDBHelper downloadDBHelper;
     private DownloadProgressListener progressListener;
     private DownloaderConfig config;
-    private int fileSize = 0;
+    private long fileSize = 0;
     private DownloadThread[] threads;
     private File saveFile;
     //    private Map<Integer, Integer> data = new ConcurrentHashMap<>();
     private List<ThreadData> data = new ArrayList<>();
-    private int downloadSize = 0;
-    private int lastDownloadSize = 0;//The last time update download progress
-    private int block;
+    private long downloadSize = 0;
+    private long lastDownloadSize = 0;//The last time update download progress
+    private long block;
     private Handler mHandler;
     private int downloadStatus = DOWNLOAD_STATUS_NONE; //
     private int targetStatus = DOWNLOAD_STATUS_NONE; //
@@ -60,9 +60,9 @@ public class FileDownloader {
     public void readHistory(HistoryCallback historyCallback) {
         DownloadDBHelper downloadDBHelper = DownloadDBHelper.getInstance(mContext, DBOpenHelper.DEFAULT_DB_NAME);
         List<ThreadData> threadDataList = downloadDBHelper.query(this.config.getDownloadUrl());
-        int total = 0;
+        long total = 0;
         if (null != threadDataList && threadDataList.size() == this.config.getThreadNum()) {
-            int fileSize = threadDataList.get(0).getFileSize();
+            long fileSize = threadDataList.get(0).getFileSize();
             for (ThreadData threadData : threadDataList) {
                 total += threadData.getDownloadLength();
             }
@@ -70,7 +70,6 @@ public class FileDownloader {
         } else {
             historyCallback.onReadHistory(0, 0);
         }
-
     }
 
     protected void setConfig(DownloaderConfig config) {
@@ -182,10 +181,16 @@ public class FileDownloader {
             URL url = new URL(this.config.getDownloadUrl());
 
             for (int i = 0; i < this.threads.length; i++) {//Open a thread to download
-                int downLength = this.data.get(i).getDownloadLength();
+                long downLength = this.data.get(i).getDownloadLength();
                 if (downLength < this.block && this.downloadSize < this.fileSize) {
-                    this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block,
-                            this.data.get(i).getDownloadLength(), this.data.get(i).getThreadId());
+                    this.threads[i] = new DownloadThread()
+                            .setFileDownloader(this)
+                            .setDownUrl(url)
+                            .setSaveFile(saveFile)
+                            .setFileSize(this.fileSize)
+                            .setBlock(block)
+                            .setDownloadLength(this.data.get(i).getDownloadLength())
+                            .setThreadId(this.data.get(i).getThreadId());
                     this.threads[i].setPriority(7);
                     this.threads[i].start();
                 } else {
@@ -220,8 +225,14 @@ public class FileDownloader {
                     if (this.threads[i] != null && !this.threads[i].isFinish()) {
                         notFinish = true;
                         if (this.threads[i].getDownloadLength() == -1 || this.threads[i].isInterrupt()) {//Restart the download threads when thread exception
-                            this.threads[i] = new DownloadThread(this, url, this.saveFile, this.block,
-                                    this.data.get(i).getDownloadLength(), this.data.get(i).getThreadId());
+                            this.threads[i] = new DownloadThread()
+                                    .setFileDownloader(this)
+                                    .setDownUrl(url)
+                                    .setSaveFile(saveFile)
+                                    .setFileSize(this.fileSize)
+                                    .setBlock(block)
+                                    .setDownloadLength(this.data.get(i).getDownloadLength())
+                                    .setThreadId(this.data.get(i).getThreadId());
                             this.threads[i].setPriority(7);
                             this.threads[i].start();
                         }
@@ -293,7 +304,7 @@ public class FileDownloader {
         return fileName;
     }
 
-    private void onDownloadSize(final int size, final float percent, final float speed) {
+    private void onDownloadSize(final long size, final float percent, final float speed) {
         if (null != progressListener) {
             if (Looper.myLooper() != Looper.getMainLooper()) {
                 mHandler.post(new Runnable() {
@@ -308,7 +319,7 @@ public class FileDownloader {
         }
     }
 
-    private void onDownloadTotalSize(final int totalSize) {
+    private void onDownloadTotalSize(final long totalSize) {
         if (null != progressListener) {
             if (Looper.myLooper() != Looper.getMainLooper()) {
                 mHandler.post(new Runnable() {
@@ -395,11 +406,11 @@ public class FileDownloader {
         }
     }
 
-    protected synchronized void append(int size) {
+    protected synchronized void append(long size) {
         downloadSize += size;
     }
 
-    protected synchronized void update(int threadId, int downloadLength) {
+    protected synchronized void update(int threadId, long downloadLength) {
         for (ThreadData threadData : this.data) {
             if (threadData.getThreadId() == threadId) {
                 threadData.setDownloadLength(downloadLength);
@@ -419,7 +430,7 @@ public class FileDownloader {
      * @param size unit Byte
      * @return
      */
-    public static final String formatSize(int size) {
+    public static final String formatSize(long size) {
         if (size < MB_CONSTANT) {
             float kSize = (float) size / KB_CONSTANT;
             kSize = ((float) ((int) (kSize * 10))) / 10;
@@ -467,7 +478,7 @@ public class FileDownloader {
      *
      * @return
      */
-    public static String formatPercent(int downloadSize, int fileSize) {
+    public static String formatPercent(long downloadSize, int fileSize) {
         float num = (float) downloadSize / fileSize;
         float percent = ((float) (int) (num * 1000)) / 10;
         return String.valueOf(percent + "%");
@@ -478,7 +489,7 @@ public class FileDownloader {
      *
      * @return
      */
-    public static float calculatePercent(int downloadSize, int fileSize) {
+    public static float calculatePercent(long downloadSize, long fileSize) {
         float num = (float) downloadSize / fileSize;
         float percent = ((float) (int) (num * 1000)) / 10;
 //        LogUtils.d(TAG, "download percent = " + percent + "%");
@@ -496,7 +507,7 @@ public class FileDownloader {
         float usedTime = ((float) (endTime - startTime)) / 1000;
         float speed = 0;
         if (usedTime > 0) {
-            int mSize = this.downloadSize - this.lastDownloadSize;
+            long mSize = this.downloadSize - this.lastDownloadSize;
             speed = ((float) mSize / usedTime) / KB_CONSTANT;
             speed = ((float) ((int) (speed * 10))) / 10;
         }
@@ -522,5 +533,4 @@ public class FileDownloader {
             LogUtils.d(TAG, key + entry.getValue());
         }
     }
-
 }

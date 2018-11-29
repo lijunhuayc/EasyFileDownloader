@@ -18,13 +18,17 @@ public class DownloadThread extends Thread {
     private FileDownloader fileDownloader;
     private URL downUrl;
     private File saveFile;
-    private int block;
-    private int downloadLength = -1;
+    private long fileSize;
+    private long block;
+    private long downloadLength = -1;
     private int threadId = -1;
     private boolean finish = false;
     private boolean isInterrupt = false;
 
-    public DownloadThread(FileDownloader fileDownloader, URL downUrl, File saveFile, int block, int downloadLength, int threadId) {
+    public DownloadThread() {
+    }
+
+    public DownloadThread(FileDownloader fileDownloader, URL downUrl, File saveFile, long block, long downloadLength, int threadId) {
         this.downUrl = downUrl;
         this.saveFile = saveFile;
         this.block = block;
@@ -33,14 +37,52 @@ public class DownloadThread extends Thread {
         this.downloadLength = downloadLength;
     }
 
+    public DownloadThread setFileDownloader(FileDownloader pFileDownloader) {
+        fileDownloader = pFileDownloader;
+        return this;
+    }
+
+    public DownloadThread setDownUrl(URL pDownUrl) {
+        downUrl = pDownUrl;
+        return this;
+    }
+
+    public DownloadThread setSaveFile(File pSaveFile) {
+        saveFile = pSaveFile;
+        return this;
+    }
+
+    public DownloadThread setFileSize(long pFileSize) {
+        fileSize = pFileSize;
+        return this;
+    }
+
+    public DownloadThread setBlock(long pBlock) {
+        block = pBlock;
+        return this;
+    }
+
+    public DownloadThread setDownloadLength(long pDownloadLength) {
+        downloadLength = pDownloadLength;
+        return this;
+    }
+
+    public DownloadThread setThreadId(int pThreadId) {
+        threadId = pThreadId;
+        return this;
+    }
+
     @Override
     public void run() {
         if (this.downloadLength < this.block) {
             InputStream inStream = null;
             RandomAccessFile randomAccessFile = null;
             try {
-                int startPos = this.block * (this.threadId) + this.downloadLength;
-                int endPos = this.block * (this.threadId + 1) - 1;
+                long startPos = this.block * (this.threadId) + this.downloadLength;
+                long endPos = this.block * (this.threadId + 1) - 1;
+                if (endPos >= this.fileSize) {//线程数除不尽时,最后一个线程的下载范围会超出文件范围,此处修正Range范围
+                    endPos = this.fileSize - 1;
+                }
 
                 HttpURLConnection httpURLConnection = (HttpURLConnection) this.downUrl.openConnection();
                 httpURLConnection.setConnectTimeout(5 * 1000);
@@ -52,7 +94,9 @@ public class DownloadThread extends Thread {
                 httpURLConnection.setRequestProperty("Range", "bytes=" + startPos + "-" + endPos);//scope of data source
                 httpURLConnection.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.2; Trident/4.0; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)");
                 httpURLConnection.setRequestProperty("Connection", "Keep-Alive");
-                LogUtils.d(TAG, "Thread " + this.threadId + " start download from position " + startPos);
+                LogUtils.d(TAG, "Thread " + this.threadId +
+                        ": responseCode = " + httpURLConnection.getResponseCode() +
+                        ", startPos = " + startPos + ", endPos = " + endPos);
 
                 inStream = httpURLConnection.getInputStream();
                 byte[] buffer = new byte[1024 * 1024];
@@ -65,12 +109,13 @@ public class DownloadThread extends Thread {
                     this.fileDownloader.append(len);
                     this.fileDownloader.update(this.threadId, this.downloadLength);
                     LogUtils.d(TAG, "Thread" + this.threadId + " downloadLength=" + this.downloadLength + ", len=" + len);
-                    if (isInterrupt) {                this.downloadLength = -1;
+                    if (isInterrupt) {
+                        this.downloadLength = -1;
                         LogUtils.d(TAG, "Thread " + this.threadId + " download interrupt.");
                         break;
                     }
                 }
-                if(!isInterrupt){
+                if (!isInterrupt) {
                     LogUtils.d(TAG, "Thread " + this.threadId + " download finish");
                     this.finish = true;
                 }
@@ -90,7 +135,6 @@ public class DownloadThread extends Thread {
                     }
                 } catch (Exception e) {
                 }
-
             }
         }
     }
